@@ -8,4 +8,4 @@ https://codelabs.developers.google.com/codelabs/firebase-web/#0
     
     Codigo del proyecto: https://github.com/wfusiman/ars2020-tp4.git
     
-    Aplicacion web desplegada: https://friendlychat-9g3b9.web.app
+    Aplicacion web desplegada: https://friendlychat-5b9e3.web.app/
