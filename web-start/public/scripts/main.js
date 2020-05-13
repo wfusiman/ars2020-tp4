@@ -91,7 +91,7 @@ function loadMessages() {
 			}
 			else {
 				var message = change.doc.data();
-				displayMessage( change.doc.id, message.timestamp, message.name, message.text, message.getProfilePicUrl, message.imageUrl );
+				displayMessage( change.doc.id, message.timestamp, message.name, message.text, message.profilePicUrl, message.imageUrl );
 			}
 		});
 	});
