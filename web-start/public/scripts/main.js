@@ -76,13 +76,13 @@ function saveMessage(messageText) {
 }
 
 // Loads chat messages history and listens for upcoming ones.
-function loadMessages() {
+function loadMessages( limit ) {
   // TODO 8: Load and listens for new messages.
 	// Create the query to load the last 12 messages and listen por new ones.
 	var query = firebase.firestore()
 						.collection('messages')
 						.orderBy( 'timestamp','desc' )
-						.limit( 12 );
+						.limit( limit );
 	// Start listening to the query.
 	query.onSnapshot( function( snapshot ) {
 		snapshot.docChanges().forEach( function( change ) {
@@ -356,6 +356,11 @@ function toggleButton() {
   }
 }
 
+function loadNextMessages( num ) {
+    limit += num;
+    loadMessages( limit );
+}
+
 // Checks that the Firebase SDK has been correctly setup and configured.
 function checkSetup() {
   if (!window.firebase || !(firebase.app instanceof Function) || !firebase.app().options) {
@@ -385,6 +390,8 @@ var signInSnackbarElement = document.getElementById('must-signin-snackbar');
 var signInGoogleButtonElement = document.getElementById('sign-in-g');
 var signInFacebookButtonElement = document.getElementById( 'sign-in-fc' );
 
+var limit = 2;
+
 // Saves message on form submit.
 messageFormElement.addEventListener('submit', onMessageFormSubmit);
 signOutButtonElement.addEventListener('click', signOut);
@@ -411,4 +418,4 @@ initFirebaseAuth();
 firebase.performance();
 
 // We load currently existing chat messages and listen to new ones.
-loadMessages();
+loadMessages( limit );
