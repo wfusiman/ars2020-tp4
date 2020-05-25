@@ -16,9 +16,25 @@
 
 // Note: You will edit this file in the follow up codelab about the Cloud Functions for Firebase.
 
-// TODO(DEVELOPER): Import the Cloud Functions for Firebase and the Firebase Admin modules here.
+// Import the Firebase SDK for Google Cloud Functions
+const functions = require( 'firebase-functions' );
+// Import and inicialize the Firebase Admin SDK.
+const admin = require( 'firebase-admin' );
+admin.initializeApp();
 
-// TODO(DEVELOPER): Write the addWelcomeMessages Function here.
+exports.addWelcomeMessages = functions.auth.user().onCreate( async (user) => {
+    console.log( 'A new user signed in for the first time.' );
+    const fullName = user.displayName || 'Anonymous';
+
+    // Save the welcome message into the database which the displays int the FriendlyChat clients.
+    await admin.firestore().collection( 'messages' ).add( {
+        name: 'Firebase boot',
+        profilePicUrl: '/images/firebase-logo.png',
+        text: `${fullName} signed in for the first time: Welcome!`,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    console.log( 'Welcome message written to database.' );
+});
 
 // TODO(DEVELOPER): Write the blurOffensiveImages Function here.
 
