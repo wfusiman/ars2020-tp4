@@ -390,7 +390,7 @@ var signInSnackbarElement = document.getElementById('must-signin-snackbar');
 var signInGoogleButtonElement = document.getElementById('sign-in-g');
 var signInFacebookButtonElement = document.getElementById( 'sign-in-fc' );
 
-var limit = 2;
+var limit = 10;
 
 // Saves message on form submit.
 messageFormElement.addEventListener('submit', onMessageFormSubmit);
