@@ -16,6 +16,14 @@
 
 // Note: You will edit this file in the follow up codelab about the Cloud Functions for Firebase.
 
+const Vision = require('@google-cloud/vision');
+const vision = new Vision();
+const spawn = require('child-process-promise').spawn;
+
+const path = require( 'path' );
+const os = require( 'os' );
+const fs = require( 'fs' );
+
 // Import the Firebase SDK for Google Cloud Functions
 const functions = require( 'firebase-functions' );
 // Import and inicialize the Firebase Admin SDK.
@@ -36,6 +44,48 @@ exports.addWelcomeMessages = functions.auth.user().onCreate( async (user) => {
     console.log( 'Welcome message written to database.' );
 });
 
-// TODO(DEVELOPER): Write the blurOffensiveImages Function here.
+// Chequea si la imagen cargada es marcada como para adultos o violenta y la convierte a difusa.
+exports.blurOffensiveImages = functions.runWith( {memory:'2GB'}).storage.object().onFinalize( async (object) => {
+    console.log( 'The Image ', object.name, 'has been detected as inappropiate.');
+    return blurImage( object.name );
+    /*
+    const image = {
+        source: { imageUri: `gs://${object.bucket}/${object.name}`},
+    };
+    // Chequea el contenido de la imagen utilizando Cloud Vision API.
+    const batchAnnotateImagesResponse = await vision.safeSearchDetection( image );
+    const safeSearchResult = batchAnnotateImagesResponse[0].safeSearchAnnotation;
+    const likelihood = vision.types.Likelihood;
+    if (likelihood[safeSearchResult.adult] >= Likelihood.LIKELY || 
+        Likelihood[safeSearchResult.violence] >= Likelihood.LIKELI) {
+            console.log( 'The Image ', object.name, 'has been detected as inappropiate.');
+            return blurImages( object.name );
+        }
+    console.log( 'The image ', object.name, 'has been detected as OK.' );
+    */
+})
+
+// Desemfoca una imagen 
+async function blurImage(filePath) {
+    const tempLocalFile = path.join(os.tmpdir(), path.basename(filePath));
+    const messageId = filePath.split(path.sep)[1];
+    const bucket = admin.storage().bucket();
+  
+    // Download file from bucket.
+    await bucket.file(filePath).download({destination: tempLocalFile});
+    console.log('Image has been downloaded to', tempLocalFile);
+    // Blur the image using ImageMagick.
+    await spawn('convert', [tempLocalFile, '-channel', 'RGBA', '-blur', '0x24', tempLocalFile]);
+    console.log('Image has been blurred');
+    // Uploading the Blurred image back into the bucket.
+    await bucket.upload(tempLocalFile, {destination: filePath});
+    console.log('Blurred image has been uploaded to', filePath);
+    // Deleting the local file to free up disk space.
+    fs.unlinkSync(tempLocalFile);
+    console.log('Deleted local file.');
+    // Indicate that the message has been moderated.
+    await admin.firestore().collection('messages').doc(messageId).update({moderated: true});
+    console.log('Marked the image as moderated in the database.');
+  }
 
 // TODO(DEVELOPER): Write the sendNotifications Function here.
