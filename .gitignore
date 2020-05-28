@@ -1,2 +1,8 @@
 # node modules functions
 web-start/functions/node_modules
+
+# vscode
+.vscode
+
+# firebase
+web-start/.firebaase

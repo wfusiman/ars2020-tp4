@@ -16,8 +16,8 @@
 
 // Note: You will edit this file in the follow up codelab about the Cloud Functions for Firebase.
 
-const Vision = require('@google-cloud/vision');
-const vision = new Vision();
+//const Vision = require('@google-cloud/vision');
+//const vision = new Vision();
 const spawn = require('child-process-promise').spawn;
 
 const path = require( 'path' );
@@ -46,6 +46,7 @@ exports.addWelcomeMessages = functions.auth.user().onCreate( async (user) => {
 
 // Chequea si la imagen cargada es marcada como para adultos o violenta y la convierte a difusa.
 exports.blurOffensiveImages = functions.runWith( {memory:'2GB'}).storage.object().onFinalize( async (object) => {
+    console.log( 'Objecto: ', object );
     console.log( 'The Image ', object.name, 'has been detected as inappropiate.');
     return blurImage( object.name );
     /*
@@ -71,6 +72,9 @@ async function blurImage(filePath) {
     const messageId = filePath.split(path.sep)[1];
     const bucket = admin.storage().bucket();
   
+    console.log( 'tempLocalFile: ', tempLocalFile );
+    console.log( 'messageId: ', messageId );
+    
     // Download file from bucket.
     await bucket.file(filePath).download({destination: tempLocalFile});
     console.log('Image has been downloaded to', tempLocalFile);

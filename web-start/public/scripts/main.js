@@ -101,22 +101,31 @@ function loadMessages( limit ) {
 // Saves a new message containing an image in Firebase.
 // This first saves the image in Firebase storage.
 function saveImageMessage(file) {
+    console.log( 'saveImageMessage - file: ', file );
   // TODO 9: Posts a new image as a message.
 	// 1 - We add a message width a loading icon that will get updated with the shared image.
 	firebase.firestore().collection('messages').add( {
 			name: getUserName(),
 			imageUrl: LOADING_IMAGE_URL,
 			profilePicUrl: getProfilePicUrl(),
-			timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
 		}).then( function( messageRef ) {
+            console.log( 'saveImageMessage - messageRef: ', messageRef );
 			// 2 - Upload the image to Cloud Storage.
-			var filePath = firebase.auth().currentUser.uid + '/' + messageRef.id + '/' + file.name;
-			return firebase.storage().ref( filePath ).put( file ).then( function( fileSnapshot ) {
+            var filePath = firebase.auth().currentUser.uid + '/' + messageRef.id + '/' + file.name;
+            var originFilePath = firebase.auth.currentUser.uid + '/' + messageRef.id + '/original-' + file.name;
+
+            console.log( 'saveImageMessage - filePath: ', filePath );
+            console.log( 'saveImageMessage - filePath: ', originalFilePath );
+
+            return firebase.storage().ref( filePath ).put( file ).then( function( fileSnapshot ) {
+                console.log( 'saveImageMessage - fileSnapchot: ', fileSnapshot );
 					// 3 - Generate a public URL for the file.
 					return fileSnapshot.ref.getDownloadURL().then( (url) => {
+                            console.log( 'saveImageMessage - url: ', url );
 							// 4 - Update the chat message placeholder with the image's URL.
 							return messageRef.update( {
-									imageUrl: url,
+                                    imageUrl: url,
 									storageUri: fileSnapshot.metadata.fullPath
 								});
 						});
@@ -276,43 +285,43 @@ function deleteMessage(id) {
 }
 
 function createAndInsertMessage(id, timestamp) {
-  const container = document.createElement('div');
-  container.innerHTML = MESSAGE_TEMPLATE;
-  const div = container.firstChild;
-  div.setAttribute('id', id);
+    const container = document.createElement('div');
+    container.innerHTML = MESSAGE_TEMPLATE;
+    const div = container.firstChild;
+    div.setAttribute('id', id);
 
-  // If timestamp is null, assume we've gotten a brand new message.
-  // https://stackoverflow.com/a/47781432/4816918
-  timestamp = timestamp ? timestamp.toMillis() : Date.now();
-  div.setAttribute('timestamp', timestamp);
+    // If timestamp is null, assume we've gotten a brand new message.
+    // https://stackoverflow.com/a/47781432/4816918
+    timestamp = timestamp ? timestamp.toMillis() : Date.now();
+    div.setAttribute('timestamp', timestamp);
 
-  // figure out where to insert new message
-  const existingMessages = messageListElement.children;
-  if (existingMessages.length === 0) {
-    messageListElement.appendChild(div);
-  } else {
-    let messageListNode = existingMessages[0];
+    // figure out where to insert new message
+    const existingMessages = messageListElement.children;
+    if (existingMessages.length === 0) {
+        messageListElement.appendChild(div);
+    } else {
+        let messageListNode = existingMessages[0];
 
-    while (messageListNode) {
-      const messageListNodeTime = messageListNode.getAttribute('timestamp');
+        while (messageListNode) {
+        const messageListNodeTime = messageListNode.getAttribute('timestamp');
 
-      if (!messageListNodeTime) {
-        throw new Error(
-          `Child ${messageListNode.id} has no 'timestamp' attribute`
-        );
-      }
+        if (!messageListNodeTime) {
+            throw new Error(
+            `Child ${messageListNode.id} has no 'timestamp' attribute`
+            );
+        }
 
-      if (messageListNodeTime > timestamp) {
-        break;
-      }
+        if (messageListNodeTime > timestamp) {
+            break;
+        }
 
-      messageListNode = messageListNode.nextSibling;
+        messageListNode = messageListNode.nextSibling;
+        }
+
+        messageListElement.insertBefore(div, messageListNode);
     }
 
-    messageListElement.insertBefore(div, messageListNode);
-  }
-
-  return div;
+    return div;
 }
 
 // Displays a Message in the UI.
@@ -332,13 +341,50 @@ function displayMessage(id, timestamp, name, text, picUrl, imageUrl) {
     // Replace all line breaks by <br>.
     messageElement.innerHTML = messageElement.innerHTML.replace(/\n/g, '<br>');
   } else if (imageUrl) { // If the message is an image.
+    //var divimage = document.createElement( 'div' );
     var image = document.createElement('img');
+    if (imageUrl.isblur) {
+        /*
+        lnkview.appendChild( document.createTextNode( 'visualizar' ) );
+        lnkview.addEventListener( 'click', function() {
+            console.log( 'click visualizar: ' );
+        });
+        */
+       image.addEventListener( 'mouseover', function() {
+           console.log( 'mouseover is blur' );
+           this.style.cursor='pointer';
+       } );
+       image.addEventListener( 'click', function() {
+           console.log( 'click div is blur' );
+       });
+    }
+    else {
+        /*
+        lnkview.appendChild( document.createTextNode( 'desenfocar' ) );
+        lnkview.addEventListener( 'click', function() {
+            console.log( 'click ' );
+        });
+        */
+       image.addEventListener( 'mouseover', function() {
+            console.log( 'mouseover is not blur' );
+            this.style.cursor='pointer';
+            } 
+        );
+       image.addEventListener( 'click', function() {
+            console.log( 'click div is not blur' );
+        });
+    }
+
     image.addEventListener('load', function() {
       messageListElement.scrollTop = messageListElement.scrollHeight;
     });
     image.src = imageUrl + '&' + new Date().getTime();
+    //divimage.appendChild( image );
+    //divimage.appendChild( document.createElement( 'br' ) );
+    //divimage.appendChild( lnkview );
+
     messageElement.innerHTML = '';
-    messageElement.appendChild(image);
+    messageElement.appendChild( image );
   }
   // Show the card fading-in and scroll to view the new message.
   setTimeout(function() {div.classList.add('visible')}, 1);
