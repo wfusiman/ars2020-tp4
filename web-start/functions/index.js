@@ -131,7 +131,6 @@ async function blurImage(filePath) {
 }
 
 // Envia una notificacion a todos los usuarios cuando se postea un nuevo mensaje.
-/*
 exports.sendNotifications = functions.firestore.document('messages/{messageId}').onCreate(
     async (snapshot) => {
       // Notification details.
@@ -159,7 +158,6 @@ exports.sendNotifications = functions.firestore.document('messages/{messageId}')
         console.log('Notifications have been sent and tokens cleaned up.');
       }
     });
-*/
 
 // Clean up the tokens that are no longer valid.
 function cleanupTokens(response, tokens) {

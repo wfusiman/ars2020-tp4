@@ -346,14 +346,17 @@ function displayMessage(id, timestamp, name, text, picUrl, imageUrl, originalIma
     messageElement.innerHTML = messageElement.innerHTML.replace(/\n/g, '<br>');
   } else if (imageUrl) { // If the message is an image.
     
+    // div contenedor de las imagenes original y la difusa.
     var divimage = document.createElement( 'div' );
     
+    // img imagen difusa
     var image = document.createElement('img');
     image.setAttribute( 'id', id + '-blur' );
     image.addEventListener( 'mouseover', function() {
         this.style.cursor='pointer';
     });
 
+    // img imagen original sin retocar
     var imageOrigin = document.createElement( 'img' );
     imageOrigin.setAttribute( 'id', id+ '-origin' );
     imageOrigin.style = 'display: none';
@@ -362,18 +365,17 @@ function displayMessage(id, timestamp, name, text, picUrl, imageUrl, originalIma
         } 
     );
     
+    // action click sobre la imagen difusa, muestra la imagen original y oculta la imagen difusa.
     image.addEventListener( 'click', function() {
-        console.log( 'click div is blur' );
         const myId = this.getAttribute( 'id' );
-        console.log( 'id imagen original: ', myId.split('-')[0] + '-origin' );
         const imageOrigin = document.getElementById( myId.split('-')[0] + '-origin' );
         imageOrigin.style = 'display: block';
         this.style = 'display: none';
         
     });
        
+    // action click sobre la imagen original, muestra la imagen difusa y oculta la imagen original
     imageOrigin.addEventListener( 'click', function() {
-        console.log( 'click div is not blur' );
         const myId = this.getAttribute( 'id' );
         const imageBlur = document.getElementById( myId.split('-')[0] + '-blur' );
         imageBlur.style = 'display: block';
@@ -391,44 +393,19 @@ function displayMessage(id, timestamp, name, text, picUrl, imageUrl, originalIma
     
     imageOrigin.src = originalImageUrl + '&' + new Date().getTime();
   
+    // agraga las dos imagenes al div contenedor.
     divimage.appendChild( image );
     divimage.appendChild( imageOrigin );
     
     messageElement.innerHTML = '';
     messageElement.appendChild( divimage );
-
-    /*** KB */
-    /*
-    var button = document.createElement('button');
-    button.innerText = 'original'
-
-    // cambiamos src a la imagen original
-    const arrayPath = imageUrl.substring(0, imageUrl.lastIndexOf("/"))
-    const nameFile = imageUrl.replace(/^.*(%2F)/, '')
-    const imageOriginal = arrayPath + '%2Foriginal-' + nameFile
-    
-    console.log('ap ', arrayPath);
-    
-    console.log('nf ', nameFile);
-
-    console.log('im ', imageOriginal);
-
-
-    button.addEventListener('click', () => {
-      console.log('hola soy el boton de la imagen')
-      image.src = imageOriginal + '&' + new Date().getTime();
-      messageElement.innerHTML = '';
-      messageElement.appendChild(image);
-    })
-    messageElement.appendChild(button)
-    */
-    /**** */
   }
   // Show the card fading-in and scroll to view the new message.
   setTimeout(function() {div.classList.add('visible')}, 1);
   messageListElement.scrollTop = messageListElement.scrollHeight;
   messageInputElement.focus();
 }
+
 
 // Enables or disables the submit button depending on the values of the input
 // fields.
