@@ -14,9 +14,11 @@ https://codelabs.developers.google.com/codelabs/firebase-web/#0
 
 ## RESOLUCION TRABAJO PRACTICO 5
 
-1. Inicialmente se cargan los últimos 10 mensajes, luego medianteel botón "cargar" se cargan de a 5 mensajes anteriores por cada vez que se presiona.
+1. Inicialmente se cargan los últimos 10 mensajes, luego mediante el botón "cargar" se cargan de a 5 mensajes anteriores por cada vez que se presiona.
 
 2. https://codelabs.developers.google.com/codelabs/firebase-cloud-functions/#4
 
-3. Permite ver la versión no borrosa de una imagen.
-Al cargar una imagen en la aplicación, se realiza la carga en el Cloud Storage de la mismaimagen dos veces, de tal manera que una de ellas no se modificara (llevara antepuestola cadena ’original-’ al principio del nombre del archivo), y la otra sera procesada y difumi-nada al momento de cargarse en el cloud Storage. También se generan las url publicaspara las dos imágenes.Cuando se realiza la carga de los mensajes, en el caso de una imagen se realiza la cargade las dos imágenes, y se mostrara por defecto la imagen difusa, de tal manera que ha-ciendo click sobre ella se muestra la imagen original. También es posible volver a ver laimagen difusa haciendo click sobre la original
+3. Permite ver la versión no borrosa de una imagen. \
+Al cargar una imagen en la aplicación, se realiza la carga en el Cloud Storage de la misma imagen dos veces, de tal manera que una de ellas no se modificara (llevara antepuesto la cadena ’original-’ al principio del nombre del archivo), y la otra sera procesada y difuminada al momento de cargarse en el cloud Storage. También se generan las url publicas para las dos imágenes. \
+Cuando se realiza la carga de los mensajes, en el caso de una imagen se realiza la carga de las dos imágenes, y se mostrara por defecto la imagen difusa, de tal manera que haciendo click sobre ella se muestra la imagen original. \ 
+También es posible volver a ver la imagen difusa haciendo click sobre la imagen original.
