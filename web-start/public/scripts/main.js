@@ -91,7 +91,7 @@ function loadMessages( limit ) {
 			}
 			else {
 				var message = change.doc.data();
-				displayMessage( change.doc.id, message.timestamp, message.name, message.text, message.profilePicUrl, message.imageUrl, message.imageUrlOrigin );
+				displayMessage( change.doc.id, message.timestamp, message.name, message.text, message.profilePicUrl, message.imageUrl, message.originalImageUrl );
 			}
 		});
 	});
@@ -108,20 +108,32 @@ function saveImageMessage(file) {
 			name: getUserName(),
 			imageUrl: LOADING_IMAGE_URL,
 			profilePicUrl: getProfilePicUrl(),
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
 		}).then( function( messageRef ) {
 			// 2 - Upload the image to Cloud Storage.
             var filePath = firebase.auth().currentUser.uid + '/' + messageRef.id + '/' + file.name;
-            return firebase.storage().ref( filePath ).put( file ).then( function( fileSnapshot ) {
-					// 3 - Generate a public URL for the file.
-					return fileSnapshot.ref.getDownloadURL().then( (url) => {
-							// 4 - Update the chat message placeholder with the image's URL.
-							return messageRef.update( {
+            firebase.storage().ref( filePath ).put( file ).then( function( fileSnapshot ) {
+					    // 3 - Generate a public URL for the file.
+					    return fileSnapshot.ref.getDownloadURL().then( (url) => {
+							    // 4 - Update the chat message placeholder with the image's URL.
+							    return messageRef.update( {
                                     imageUrl: url,
-									storageUri: fileSnapshot.metadata.fullPath
-								});
-						});
-				});
+									                storageUri: fileSnapshot.metadata.fullPath
+								  });
+						  });
+            });
+            
+            var originalFilePath = firebase.auth().currentUser.uid + '/' + messageRef.id + '/original-' + file.name;
+             firebase.storage().ref( originalFilePath ).put( file ).then( function( fileSnapshot ) {
+					    // 3 - Generate a public URL for the file.
+					    return fileSnapshot.ref.getDownloadURL().then( (url) => {
+							    // 4 - Update the chat message placeholder with the image's URL.
+							    return messageRef.update( {
+                                    originalImageUrl: url,
+									                originalStorageUri: fileSnapshot.metadata.fullPath
+								  });
+						  });
+				    });
 			}).catch( function( error ) {
 					console.error( 'There was an error uploading a file to Cloud Storage: ', error );
 			});
@@ -317,7 +329,7 @@ function createAndInsertMessage(id, timestamp) {
 }
 
 // Displays a Message in the UI.
-function displayMessage(id, timestamp, name, text, picUrl, imageUrl, imageUrlOrigin ) {
+function displayMessage(id, timestamp, name, text, picUrl, imageUrl, originalImageUrl ) {
   var div = document.getElementById(id) || createAndInsertMessage(id, timestamp);
 
   // profile picture
@@ -333,6 +345,7 @@ function displayMessage(id, timestamp, name, text, picUrl, imageUrl, imageUrlOri
     // Replace all line breaks by <br>.
     messageElement.innerHTML = messageElement.innerHTML.replace(/\n/g, '<br>');
   } else if (imageUrl) { // If the message is an image.
+    
     var divimage = document.createElement( 'div' );
     
     var image = document.createElement('img');
@@ -375,13 +388,41 @@ function displayMessage(id, timestamp, name, text, picUrl, imageUrl, imageUrlOri
     imageOrigin.addEventListener('load', function() {
         messageListElement.scrollTop = messageListElement.scrollHeight;
     });
-    imageOrigin.src = imageUrlOrigin + '&' + new Date().getTime();
+    
+    imageOrigin.src = originalImageUrl + '&' + new Date().getTime();
   
     divimage.appendChild( image );
     divimage.appendChild( imageOrigin );
-
+    
     messageElement.innerHTML = '';
     messageElement.appendChild( divimage );
+
+    /*** KB */
+    /*
+    var button = document.createElement('button');
+    button.innerText = 'original'
+
+    // cambiamos src a la imagen original
+    const arrayPath = imageUrl.substring(0, imageUrl.lastIndexOf("/"))
+    const nameFile = imageUrl.replace(/^.*(%2F)/, '')
+    const imageOriginal = arrayPath + '%2Foriginal-' + nameFile
+    
+    console.log('ap ', arrayPath);
+    
+    console.log('nf ', nameFile);
+
+    console.log('im ', imageOriginal);
+
+
+    button.addEventListener('click', () => {
+      console.log('hola soy el boton de la imagen')
+      image.src = imageOriginal + '&' + new Date().getTime();
+      messageElement.innerHTML = '';
+      messageElement.appendChild(image);
+    })
+    messageElement.appendChild(button)
+    */
+    /**** */
   }
   // Show the card fading-in and scroll to view the new message.
   setTimeout(function() {div.classList.add('visible')}, 1);
