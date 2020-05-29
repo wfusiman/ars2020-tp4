@@ -18,6 +18,11 @@
 
 //const Vision = require('@google-cloud/vision');
 //const vision = new Vision();
+
+const {Storage} = require('@google-cloud/storage');
+// Creates a client
+const storage = new Storage();
+
 const spawn = require('child-process-promise').spawn;
 
 const path = require( 'path' );
@@ -45,10 +50,27 @@ exports.addWelcomeMessages = functions.auth.user().onCreate( async (user) => {
 });
 
 // Chequea si la imagen cargada es marcada como para adultos o violenta y la convierte a difusa.
-exports.blurOffensiveImages = functions.runWith( {memory:'2GB'}).storage.object().onFinalize( async (object) => {
+exports.blurOffensiveImages = functions.runWith( {memory:'1GB'}).storage.object().onFinalize( async (object) => {
     console.log( 'Objecto: ', object );
     console.log( 'The Image ', object.name, 'has been detected as inappropiate.');
-    return blurImage( object.name );
+    
+    const messageId =  object.name.split(path.sep)[1];
+    console.log( 'blurOffensiveImages, messageId = ', messageId );
+
+    await admin.firestore().collection( 'messages' ).doc( messageId ).get()
+        .then( doc => {
+            if (!doc.moderated) {
+                console.log( 'La imagen debe ser desenfocada' );
+                blurImage( object.name );
+                return;
+            }
+            else {
+                console.log( 'La imagen ya esta moderada' );
+                // return;
+            }
+            return;
+        });
+    
     /*
     const image = {
         source: { imageUri: `gs://${object.bucket}/${object.name}`},
@@ -78,6 +100,18 @@ async function blurImage(filePath) {
     // Download file from bucket.
     await bucket.file(filePath).download({destination: tempLocalFile});
     console.log('Image has been downloaded to', tempLocalFile);
+
+    // copiar imagen
+    const fileDest =  path.dirname(filePath) + '/original-' + path.basename( filePath );
+    console.log( '**** blur Image, filePath: ', filePath );
+    console.log( '**** blur image, fileDest: ' , fileDest );
+    //await copyFile( bucket, filename, bucket, 'original-' + filename );
+
+    await admin.storage().bucket().file( filePath ).copy( fileDest );
+ 
+    //console.log( `gs://${srcBucketName}/${srcFilename} copied to gs://${destBucketName}/${destFilename}.` );
+    
+    /*
     // Blur the image using ImageMagick.
     await spawn('convert', [tempLocalFile, '-channel', 'RGBA', '-blur', '0x24', tempLocalFile]);
     console.log('Image has been blurred');
@@ -90,9 +124,11 @@ async function blurImage(filePath) {
     // Indicate that the message has been moderated.
     await admin.firestore().collection('messages').doc(messageId).update({moderated: true});
     console.log('Marked the image as moderated in the database.');
-  }
+    */
+}
 
 // Envia una notificacion a todos los usuarios cuando se postea un nuevo mensaje.
+/*
 exports.sendNotifications = functions.firestore.document('messages/{messageId}').onCreate(
     async (snapshot) => {
       // Notification details.
@@ -120,6 +156,7 @@ exports.sendNotifications = functions.firestore.document('messages/{messageId}')
         console.log('Notifications have been sent and tokens cleaned up.');
       }
     });
+*/
 
 // Clean up the tokens that are no longer valid.
 function cleanupTokens(response, tokens) {
@@ -139,3 +176,14 @@ function cleanupTokens(response, tokens) {
     });
     return Promise.all(tokensDelete);
    }
+
+   async function copyFile( srcBucketName, srcFilename, destBucketName, destFilename ) {
+    // Copies the file to the other bucket
+    await storage
+      .bucket(srcBucketName)
+      .file(srcFilename)
+      .copy(storage.bucket(destBucketName).file(destFilename));
+ 
+    console.log( `gs://${srcBucketName}/${srcFilename} copied to gs://${destBucketName}/${destFilename}.` );
+  }
+  

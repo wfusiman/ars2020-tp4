@@ -91,7 +91,7 @@ function loadMessages( limit ) {
 			}
 			else {
 				var message = change.doc.data();
-				displayMessage( change.doc.id, message.timestamp, message.name, message.text, message.profilePicUrl, message.imageUrl );
+				displayMessage( change.doc.id, message.timestamp, message.name, message.text, message.profilePicUrl, message.imageUrl, message.imageUrlOrigin );
 			}
 		});
 	});
@@ -110,19 +110,11 @@ function saveImageMessage(file) {
 			profilePicUrl: getProfilePicUrl(),
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
 		}).then( function( messageRef ) {
-            console.log( 'saveImageMessage - messageRef: ', messageRef );
 			// 2 - Upload the image to Cloud Storage.
             var filePath = firebase.auth().currentUser.uid + '/' + messageRef.id + '/' + file.name;
-            var originFilePath = firebase.auth.currentUser.uid + '/' + messageRef.id + '/original-' + file.name;
-
-            console.log( 'saveImageMessage - filePath: ', filePath );
-            console.log( 'saveImageMessage - filePath: ', originalFilePath );
-
             return firebase.storage().ref( filePath ).put( file ).then( function( fileSnapshot ) {
-                console.log( 'saveImageMessage - fileSnapchot: ', fileSnapshot );
 					// 3 - Generate a public URL for the file.
 					return fileSnapshot.ref.getDownloadURL().then( (url) => {
-                            console.log( 'saveImageMessage - url: ', url );
 							// 4 - Update the chat message placeholder with the image's URL.
 							return messageRef.update( {
                                     imageUrl: url,
@@ -325,7 +317,7 @@ function createAndInsertMessage(id, timestamp) {
 }
 
 // Displays a Message in the UI.
-function displayMessage(id, timestamp, name, text, picUrl, imageUrl) {
+function displayMessage(id, timestamp, name, text, picUrl, imageUrl, imageUrlOrigin ) {
   var div = document.getElementById(id) || createAndInsertMessage(id, timestamp);
 
   // profile picture
@@ -341,50 +333,55 @@ function displayMessage(id, timestamp, name, text, picUrl, imageUrl) {
     // Replace all line breaks by <br>.
     messageElement.innerHTML = messageElement.innerHTML.replace(/\n/g, '<br>');
   } else if (imageUrl) { // If the message is an image.
-    //var divimage = document.createElement( 'div' );
+    var divimage = document.createElement( 'div' );
+    
     var image = document.createElement('img');
-    if (imageUrl.isblur) {
-        /*
-        lnkview.appendChild( document.createTextNode( 'visualizar' ) );
-        lnkview.addEventListener( 'click', function() {
-            console.log( 'click visualizar: ' );
-        });
-        */
-       image.addEventListener( 'mouseover', function() {
-           console.log( 'mouseover is blur' );
-           this.style.cursor='pointer';
-       } );
-       image.addEventListener( 'click', function() {
-           console.log( 'click div is blur' );
-       });
-    }
-    else {
-        /*
-        lnkview.appendChild( document.createTextNode( 'desenfocar' ) );
-        lnkview.addEventListener( 'click', function() {
-            console.log( 'click ' );
-        });
-        */
-       image.addEventListener( 'mouseover', function() {
-            console.log( 'mouseover is not blur' );
-            this.style.cursor='pointer';
-            } 
-        );
-       image.addEventListener( 'click', function() {
-            console.log( 'click div is not blur' );
-        });
-    }
+    image.setAttribute( 'id', id + '-blur' );
+    image.addEventListener( 'mouseover', function() {
+        this.style.cursor='pointer';
+    });
 
+    var imageOrigin = document.createElement( 'img' );
+    imageOrigin.setAttribute( 'id', id+ '-origin' );
+    imageOrigin.style = 'display: none';
+    imageOrigin.addEventListener( 'mouseover', function() {
+        this.style.cursor='pointer';
+        } 
+    );
+    
+    image.addEventListener( 'click', function() {
+        console.log( 'click div is blur' );
+        const myId = this.getAttribute( 'id' );
+        console.log( 'id imagen original: ', myId.split('-')[0] + '-origin' );
+        const imageOrigin = document.getElementById( myId.split('-')[0] + '-origin' );
+        imageOrigin.style = 'display: block';
+        this.style = 'display: none';
+        
+    });
+       
+    imageOrigin.addEventListener( 'click', function() {
+        console.log( 'click div is not blur' );
+        const myId = this.getAttribute( 'id' );
+        const imageBlur = document.getElementById( myId.split('-')[0] + '-blur' );
+        imageBlur.style = 'display: block';
+        this.style = 'display: none';
+    });
+    
     image.addEventListener('load', function() {
       messageListElement.scrollTop = messageListElement.scrollHeight;
     });
     image.src = imageUrl + '&' + new Date().getTime();
-    //divimage.appendChild( image );
-    //divimage.appendChild( document.createElement( 'br' ) );
-    //divimage.appendChild( lnkview );
+
+    imageOrigin.addEventListener('load', function() {
+        messageListElement.scrollTop = messageListElement.scrollHeight;
+    });
+    imageOrigin.src = imageUrlOrigin + '&' + new Date().getTime();
+  
+    divimage.appendChild( image );
+    divimage.appendChild( imageOrigin );
 
     messageElement.innerHTML = '';
-    messageElement.appendChild( image );
+    messageElement.appendChild( divimage );
   }
   // Show the card fading-in and scroll to view the new message.
   setTimeout(function() {div.classList.add('visible')}, 1);
